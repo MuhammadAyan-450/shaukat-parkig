@@ -15,6 +15,7 @@ export async function addRickshaw(numberId: string, type: RickshawType) {
     numberId,
     type,
     absent: 0,
+    credit: 0,
     status: 'A',
     history: [] as HistoryEntry[],
   });
@@ -46,22 +47,30 @@ export async function setAbsentManual(rickshaw: Rickshaw, newVal: number) {
 
 /**
  * Rs amount le kar poore din (Rs 70/60 ke multiples) mein convert karta hai.
- * Sirf poore din hi kam hote hain — jitna Rs bacha wo agli baar count hoga.
+ * Agar diya gaya paisa baqaya se ZYADA ho, to jitna zyada hai wo "credit"
+ * (advance/jama) ban jata hai — agli baar automatically usi se din kam
+ * honge (rollover mein). Misaal: 2 din (Rs140) baqaya, Rs210 diye → poora
+ * baqaya clear + Rs70 (1 din) advance jama.
  */
 export async function markPaid(
   rickshaw: Rickshaw,
   rsAmount: number
 ): Promise<{ ok: boolean; message?: string }> {
   const rate = rateFor(rickshaw);
-  const maxRs = rickshaw.absent * rate;
-  const clamped = Math.min(Math.max(rsAmount, 0), maxRs);
-  const days = Math.floor(clamped / rate);
+  const rs = Math.max(0, Math.floor(rsAmount));
 
-  if (days < 1) {
+  if (rs < 1) {
+    return { ok: false, message: 'Kam se kam Rs 1 dalen.' };
+  }
+
+  const owedRs = rickshaw.absent * rate;
+  const daysAgainstOwed = Math.min(rickshaw.absent, Math.floor(rs / rate));
+  const extraRs = rs - owedRs > 0 ? rs - owedRs : 0; // baqaya se zyada diya gaya hissa
+
+  if (daysAgainstOwed < 1 && extraRs < 1) {
     return { ok: false, message: `Kam se kam Rs ${rate} dalen (1 din ke barabar).` };
   }
 
-  const amount = days * rate;
   const cid = 'c' + Date.now() + Math.random().toString(36).slice(2, 8);
 
   await runTransaction(db, async (tx) => {
@@ -70,21 +79,35 @@ export async function markPaid(
     if (!rSnap.exists()) throw new Error('Rickshaw not found');
     const s = rSnap.data() as any;
     const currentAbsent: number = s.absent || 0;
+    const currentCredit: number = s.credit || 0;
     const history: HistoryEntry[] = s.history || [];
-    const finalDays = Math.min(days, currentAbsent);
-    if (finalDays < 1) return;
+
+    const finalDays = Math.min(daysAgainstOwed, currentAbsent);
+    const newAbsent = currentAbsent - finalDays;
+    // Agar baqaya poora clear ho gaya (0 reh gaya) tabhi extra Rs advance banega.
+    const creditToAdd = newAbsent === 0 ? extraRs : 0;
+    const newCredit = currentCredit + creditToAdd;
+    const totalCounted = finalDays * rate + creditToAdd;
 
     const newHistory = [
       ...history,
-      { date: cycleDateStr(new Date()), manual: true, delta: -finalDays, paidOff: true } as HistoryEntry,
+      {
+        date: cycleDateStr(new Date()),
+        manual: true,
+        delta: -finalDays,
+        paidOff: true,
+        ...(creditToAdd > 0 ? { creditAdded: creditToAdd } : {}),
+      } as HistoryEntry,
     ];
-    tx.update(rRef, { absent: currentAbsent - finalDays, history: newHistory });
+
+    tx.update(rRef, { absent: newAbsent, credit: newCredit, history: newHistory });
 
     const pRef = doc(collection(db, 'payments'), cid);
     tx.set(pRef, {
       rickshawId: rickshaw.numberId,
       days: finalDays,
-      amount: finalDays * rate,
+      amount: totalCounted,
+      ...(creditToAdd > 0 ? { creditAdded: creditToAdd } : {}),
       date: cycleDateStr(new Date()),
       time: new Date().toISOString(),
     });
@@ -93,7 +116,7 @@ export async function markPaid(
   return { ok: true };
 }
 
-/** Galti se hui payment cancel karta hai — baqaya din wapas add ho jate hain. */
+/** Galti se hui payment cancel karta hai — baqaya din (aur agar advance bana tha wo bhi) wapas ho jata hai. */
 export async function undoPayment(payment: Payment, rickshaws: Rickshaw[]) {
   const match = rickshaws.find((r) => r.numberId === payment.rickshawId);
 
@@ -104,12 +127,25 @@ export async function undoPayment(payment: Payment, rickshaws: Rickshaw[]) {
       if (rSnap.exists()) {
         const s = rSnap.data() as any;
         const currentAbsent: number = s.absent || 0;
+        const currentCredit: number = s.credit || 0;
         const history: HistoryEntry[] = s.history || [];
+        const creditAdded = payment.creditAdded || 0;
+
         const newHistory = [
           ...history,
-          { date: cycleDateStr(new Date()), manual: true, delta: payment.days } as HistoryEntry,
+          {
+            date: cycleDateStr(new Date()),
+            manual: true,
+            delta: payment.days,
+            ...(creditAdded > 0 ? { creditUsed: creditAdded } : {}),
+          } as HistoryEntry,
         ];
-        tx.update(rRef, { absent: currentAbsent + payment.days, history: newHistory });
+
+        tx.update(rRef, {
+          absent: currentAbsent + payment.days,
+          credit: Math.max(0, currentCredit - creditAdded),
+          history: newHistory,
+        });
       }
     }
     const pRef = doc(db, 'payments', payment.id);

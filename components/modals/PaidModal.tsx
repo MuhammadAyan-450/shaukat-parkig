@@ -15,19 +15,21 @@ export default function PaidModal({
 }) {
   const rate = rateFor(rickshaw);
   const owedRs = rickshaw.absent * rate;
-  const [val, setVal] = useState(owedRs);
+  const [val, setVal] = useState(owedRs || rate);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setVal(owedRs);
-  }, [rickshaw.id, owedRs]);
+    setVal(owedRs || rate);
+  }, [rickshaw.id, owedRs, rate]);
 
-  const days = Math.floor(Math.min(Math.max(val, 0), owedRs) / rate);
+  // Baqaya se zyada diya gaya hissa ab clamp nahi hota — woh advance (jama) ban jayega.
+  const safeVal = Math.max(val, 0);
+  const days = Math.min(rickshaw.absent, Math.floor(safeVal / rate));
+  const extraRs = safeVal - owedRs > 0 ? safeVal - owedRs : 0;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     let n = parseInt(e.target.value, 10);
     if (isNaN(n) || n < 0) n = 0;
-    if (n > owedRs) n = owedRs;
     setVal(n);
   }
 
@@ -49,6 +51,14 @@ export default function PaidModal({
         <div className="stepper-id">{rickshaw.numberId}</div>
         <div className="stepper-note">
           Kul Baqaya: {rickshaw.absent} din (Rs {owedRs})
+          {(rickshaw.credit || 0) > 0 && (
+            <>
+              <br />
+              <span style={{ color: '#1d5fd6', fontWeight: 700 }}>
+                Pehle Se Advance: Rs {rickshaw.credit}
+              </span>
+            </>
+          )}
         </div>
         <div className="stepper-controls">
           <input
@@ -65,6 +75,12 @@ export default function PaidModal({
         </div>
         <div className="stepper-sub" style={{ marginBottom: 18 }}>
           {days} din kam honge (Rs {days * rate})
+          {extraRs > 0 && (
+            <>
+              <br />
+              <span style={{ color: '#1d5fd6' }}>+ Rs {extraRs} Advance Jama Hoga</span>
+            </>
+          )}
         </div>
         <div className="confirm-row">
           <button className="btn-cancel" onClick={onClose} disabled={busy}>

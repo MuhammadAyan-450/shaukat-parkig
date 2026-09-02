@@ -21,6 +21,7 @@ export function useRickshaws() {
             numberId: data.numberId,
             type: data.type === 'redi' ? 'redi' : 'rickshaw',
             absent: data.absent || 0,
+            credit: data.credit || 0,
             status: data.status === 'P' ? 'P' : 'A',
             history: Array.isArray(data.history) ? data.history : [],
           };

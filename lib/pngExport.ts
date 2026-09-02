@@ -18,7 +18,14 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
   const footerHeight = 44;
   const sectionGap = 22;
   const topMargin = 16;
+  const dateHeaderHeight = 30;
   const bottomMargin = 16;
+
+  const now = new Date();
+  const dateTimeLabel =
+    now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ', ' +
+    now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
   function sectionHeight(rowsCount: number) {
     return barHeight + tableHeaderHeight + Math.max(rowsCount, 1) * rowHeight + footerHeight;
@@ -26,7 +33,7 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
 
   const h1 = sectionHeight(zeroRows.length);
   const h2 = sectionHeight(dueRows.length);
-  const height = topMargin + h1 + sectionGap + h2 + bottomMargin;
+  const height = topMargin + dateHeaderHeight + h1 + sectionGap + h2 + bottomMargin;
 
   const canvas = document.createElement('canvas');
   canvas.width = width * scale;
@@ -37,6 +44,13 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
+
+  // Date/time header — kab yeh PNG banayi gayi
+  ctx.fillStyle = '#888';
+  ctx.font = '600 13px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Banayi Gayi: ' + dateTimeLabel, width / 2, topMargin + 16);
+  ctx.textAlign = 'left';
 
   function drawSection(
     startY: number,
@@ -84,10 +98,11 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
         ctx!.font = '700 15px Arial';
         ctx!.fillText(s.numberId, 20, y + 25);
 
-        ctx!.fillStyle = textColor;
+        const hasCredit = (s.credit || 0) > 0;
+        ctx!.fillStyle = hasCredit ? '#1d5fd6' : textColor;
         ctx!.font = '700 15px Arial';
         ctx!.textAlign = 'right';
-        ctx!.fillText(String(s.absent), width - 20, y + 25);
+        ctx!.fillText(hasCredit ? '+Rs' + s.credit : String(s.absent), width - 20, y + 25);
         ctx!.textAlign = 'left';
 
         ctx!.strokeStyle = '#eeeeee';
@@ -114,7 +129,7 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
     return y;
   }
 
-  let y = topMargin;
+  let y = topMargin + dateHeaderHeight;
   y = drawSection(y, '0 Din Waale Rickshaw', zeroRows, '#1e7e34', '#eaf7ee', '#2e7d32');
   y += sectionGap;
   drawSection(y, 'Baqaya Din Waale Rickshaw', dueRows, '#c0392b', '#fdecea', '#c0392b');
@@ -123,9 +138,9 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const today = new Date().toISOString().slice(0, 10);
+    const stamp = now.toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
     a.href = url;
-    a.download = `meri-parking-baqaya-${today}.png`;
+    a.download = `meri-parking-baqaya-${stamp}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

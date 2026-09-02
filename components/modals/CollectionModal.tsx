@@ -34,9 +34,16 @@ export default function CollectionModal({
                     color: '#2e7d32',
                     fontWeight: 700,
                     whiteSpace: 'nowrap',
+                    textAlign: 'right',
                   }}
                 >
                   Rs {c.amount} ({c.days} din)
+                  {(c.creditAdded || 0) > 0 && (
+                    <>
+                      <br />
+                      <span style={{ color: '#1d5fd6' }}>+Rs {c.creditAdded} Advance</span>
+                    </>
+                  )}
                 </span>
                 <button
                   className="undo-btn"

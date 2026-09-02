@@ -11,6 +11,7 @@ export default function HistoryModal({
   onClose: () => void;
 }) {
   const rate = rateFor(rickshaw);
+  const hasCredit = (rickshaw.credit || 0) > 0;
   const hist = [...rickshaw.history].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
@@ -18,10 +19,15 @@ export default function HistoryModal({
       <div className="stepper-card list-card">
         <div className="stepper-title">Payment History</div>
         <div className="stepper-id">{rickshaw.numberId}</div>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#e0521f', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#e0521f', marginBottom: 4 }}>
           Total Baqaya: Rs {rickshaw.absent * rate}
         </div>
-        <div style={{ textAlign: 'left' }}>
+        {hasCredit && (
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1d5fd6', marginBottom: 12 }}>
+            🔵 Advance (Jama): Rs {rickshaw.credit}
+          </div>
+        )}
+        <div style={{ textAlign: 'left', marginTop: hasCredit ? 0 : 8 }}>
           {hist.length === 0 ? (
             <div className="list-empty">Abhi koi history nahi hai.</div>
           ) : (
@@ -31,8 +37,14 @@ export default function HistoryModal({
                 return (
                   <div className="list-row" key={i}>
                     <span style={{ fontSize: 14, color: '#777' }}>{dateLabel}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#2e7d32', textAlign: 'right' }}>
                       💰 Paid Rs {(-(h.delta || 0)) * rate} ({-(h.delta || 0)} din)
+                      {(h.creditAdded || 0) > 0 && (
+                        <>
+                          <br />
+                          <span style={{ color: '#1d5fd6' }}>+Rs {h.creditAdded} Advance</span>
+                        </>
+                      )}
                     </span>
                   </div>
                 );
@@ -42,9 +54,15 @@ export default function HistoryModal({
                 return (
                   <div className="list-row" key={i}>
                     <span style={{ fontSize: 14, color: '#777' }}>{dateLabel}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#888' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#888', textAlign: 'right' }}>
                       🛠 Manual {sign}
                       {h.delta} din
+                      {(h.creditUsed || 0) > 0 && (
+                        <>
+                          <br />
+                          <span style={{ color: '#1d5fd6' }}>-Rs {h.creditUsed} Advance</span>
+                        </>
+                      )}
                     </span>
                   </div>
                 );

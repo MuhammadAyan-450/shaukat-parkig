@@ -8,6 +8,7 @@ export function downloadBackup(rickshaws: Rickshaw[], payments: Payment[]) {
       id: r.numberId,
       type: r.type,
       absent: r.absent,
+      credit: r.credit || 0,
       status: r.status,
       history: r.history,
     })),
@@ -15,6 +16,7 @@ export function downloadBackup(rickshaws: Rickshaw[], payments: Payment[]) {
       rickshawId: p.rickshawId,
       days: p.days,
       amount: p.amount,
+      creditAdded: p.creditAdded || 0,
       date: p.date,
       time: p.time,
     })),
@@ -58,6 +60,7 @@ export async function restoreBackup(file: File): Promise<void> {
         numberId: s.id,
         type: s.type === 'redi' ? 'redi' : 'rickshaw',
         absent: s.absent || 0,
+        credit: s.credit || 0,
         status: s.status === 'P' ? 'P' : 'A',
         history: Array.isArray(s.history) ? s.history : [],
       });
@@ -74,6 +77,7 @@ export async function restoreBackup(file: File): Promise<void> {
         rickshawId: c.rickshawId,
         days: c.days || 0,
         amount: c.amount || 0,
+        creditAdded: c.creditAdded || 0,
         date: c.date,
         time: c.time || new Date().toISOString(),
       });

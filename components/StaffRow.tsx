@@ -21,12 +21,17 @@ export default function StaffRow({
   onPaid: () => void;
 }) {
   const rate = rateFor(rickshaw);
+  const hasCredit = (rickshaw.credit || 0) > 0;
+  const creditDays = Math.floor((rickshaw.credit || 0) / rate);
 
   return (
     <div className="staff-row">
       <div className="staff-left">
-        <button className="absent-badge" onClick={onOpenStepper}>
-          {rickshaw.absent}
+        <button
+          className={'absent-badge' + (hasCredit ? ' credit' : '')}
+          onClick={onOpenStepper}
+        >
+          {hasCredit ? '+' + (creditDays > 0 ? creditDays : rickshaw.credit) : rickshaw.absent}
         </button>
         <div>
           <div className="staff-id">
@@ -37,14 +42,21 @@ export default function StaffRow({
               ✎
             </span>
           </div>
-          <div className="staff-hrs">
-            {rickshaw.absent} din baqaya · Rs {rickshaw.absent * rate}{' '}
-            <span style={{ color: '#bbb' }}>({rickshaw.type === 'redi' ? 'Redi' : 'Rickshaw'})</span>
-          </div>
+          {hasCredit ? (
+            <div className="staff-hrs credit-text">
+              🔵 Rs {rickshaw.credit} Advance (Jama){' '}
+              <span style={{ color: '#bbb' }}>({rickshaw.type === 'redi' ? 'Redi' : 'Rickshaw'})</span>
+            </div>
+          ) : (
+            <div className="staff-hrs">
+              {rickshaw.absent} din baqaya · Rs {rickshaw.absent * rate}{' '}
+              <span style={{ color: '#bbb' }}>({rickshaw.type === 'redi' ? 'Redi' : 'Rickshaw'})</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="staff-actions">
-        <button className="paid-btn" onClick={onPaid} disabled={rickshaw.absent === 0}>
+        <button className="paid-btn" onClick={onPaid}>
           💰 Paid
         </button>
         <button className="aaya-btn" onClick={onAaya}>

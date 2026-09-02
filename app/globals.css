@@ -211,3 +211,12 @@ input { font-family: inherit; }
 }
 
 .empty { text-align: center; color: #aaa; padding: 60px 20px; font-size: 14px; }
+
+
+.absent-badge.credit {
+  background: #e6f0ff; color: #1d5fd6;
+}
+.credit-text {
+  color: #1d5fd6 !important;
+  font-weight: 700;
+}
