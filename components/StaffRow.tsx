@@ -1,7 +1,7 @@
 'use client';
 
 import { Rickshaw } from '@/lib/types';
-import { rateFor } from '@/lib/utils';
+import { rateFor, typeLabel, unitLabelPlural } from '@/lib/utils';
 
 export default function StaffRow({
   rickshaw,
@@ -21,38 +21,36 @@ export default function StaffRow({
   onPaid: () => void;
 }) {
   const rate = rateFor(rickshaw);
-  const hasCredit = (rickshaw.credit || 0) > 0;
-  const creditDays = Math.floor((rickshaw.credit || 0) / rate);
+  const credit = rickshaw.credit || 0;
 
   return (
     <div className="staff-row">
       <div className="staff-left">
-        <button
-          className={'absent-badge' + (hasCredit ? ' credit' : '')}
-          onClick={onOpenStepper}
-        >
-          {hasCredit ? '+' + (creditDays > 0 ? creditDays : rickshaw.credit) : rickshaw.absent}
+        <button className="absent-badge" onClick={onOpenStepper}>
+          {rickshaw.absent}
         </button>
         <div>
           <div className="staff-id">
             <span style={{ cursor: 'pointer' }} onClick={onHistory}>
               {rickshaw.numberId}
             </span>
+            {rickshaw.label && (
+              <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>· {rickshaw.label}</span>
+            )}
             <span style={{ fontSize: 12, color: '#bbb', cursor: 'pointer', padding: 4 }} onClick={onEdit}>
               ✎
             </span>
+            {credit !== 0 && (
+              <span className={'credit-chip' + (credit > 0 ? ' plus' : ' minus')}>
+                {credit > 0 ? '+' : '-'}
+                {Math.abs(credit)}
+              </span>
+            )}
           </div>
-          {hasCredit ? (
-            <div className="staff-hrs credit-text">
-              🔵 Rs {rickshaw.credit} Advance (Jama){' '}
-              <span style={{ color: '#bbb' }}>({rickshaw.type === 'redi' ? 'Redi' : 'Rickshaw'})</span>
-            </div>
-          ) : (
-            <div className="staff-hrs">
-              {rickshaw.absent} din baqaya · Rs {rickshaw.absent * rate}{' '}
-              <span style={{ color: '#bbb' }}>({rickshaw.type === 'redi' ? 'Redi' : 'Rickshaw'})</span>
-            </div>
-          )}
+          <div className="staff-hrs">
+            {rickshaw.absent} {unitLabelPlural(rickshaw.type)} baqaya · Rs {rickshaw.absent * rate}{' '}
+            <span style={{ color: '#bbb' }}>({typeLabel(rickshaw.type)})</span>
+          </div>
         </div>
       </div>
       <div className="staff-actions">

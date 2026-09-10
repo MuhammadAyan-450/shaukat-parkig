@@ -2,17 +2,22 @@
 
 import { useState } from 'react';
 import { Rickshaw } from '@/lib/types';
+import { rateFor, unitLabel, RATE_STEP } from '@/lib/utils';
 
 export default function EditModal({
   rickshaw,
   onClose,
   onSave,
+  onRateChange,
 }: {
   rickshaw: Rickshaw;
   onClose: () => void;
   onSave: (newId: string) => void;
+  onRateChange: (newRate: number) => void;
 }) {
   const [val, setVal] = useState(rickshaw.numberId);
+  const rate = rateFor(rickshaw);
+  const step = RATE_STEP[rickshaw.type];
 
   function handleSave() {
     const trimmed = val.trim();
@@ -34,6 +39,22 @@ export default function EditModal({
             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
             autoFocus
           />
+        </div>
+        <div className="stepper-title" style={{ marginBottom: 8 }}>Rate</div>
+        <div className="rate-row" style={{ justifyContent: 'center', marginBottom: 18 }}>
+          <button
+            type="button"
+            className="rate-step"
+            onClick={() => onRateChange(Math.max(step, rate - step))}
+          >
+            −
+          </button>
+          <span className="rate-value" style={{ fontSize: 15 }}>
+            Rs {rate}/{unitLabel(rickshaw.type)}
+          </span>
+          <button type="button" className="rate-step" onClick={() => onRateChange(rate + step)}>
+            +
+          </button>
         </div>
         <div className="confirm-row">
           <button className="btn-cancel" onClick={onClose}>

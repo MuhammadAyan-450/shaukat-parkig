@@ -21,7 +21,7 @@ export function usePayments() {
             rickshawId: data.rickshawId,
             days: data.days || 0,
             amount: data.amount || 0,
-            creditAdded: data.creditAdded || 0,
+            creditDelta: data.creditDelta || 0,
             date: data.date,
             time: data.time,
           };

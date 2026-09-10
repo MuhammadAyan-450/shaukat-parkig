@@ -1,11 +1,17 @@
-import { Rickshaw } from './types';
-import { naturalCompare } from './utils';
+import { Rickshaw, RickshawType } from './types';
+import { naturalCompare, unitLabelPlural } from './utils';
 
-export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'rickshaw' | 'redi') {
+export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | RickshawType) {
   const sorted = allRickshaws
     .filter((s) => activeTab === 'all' || s.type === activeTab)
     .slice()
     .sort((a, b) => naturalCompare(a.numberId, b.numberId));
+
+  // Agar ek hi type select hai (jaise sirf Bike) to uska sahi unit (din/mahine)
+  // dikhayen, warna "All" mein generic "Baqaya" rakhte hain.
+  const unitWord = activeTab === 'all' ? '' : ' ' + unitLabelPlural(activeTab as RickshawType);
+  const colHeader = 'Baqaya' + unitWord;
+  const totalUnitWord = activeTab === 'all' ? 'din/mahine' : unitLabelPlural(activeTab as RickshawType);
 
   const zeroRows = sorted.filter((s) => s.absent === 0);
   const dueRows = sorted.filter((s) => s.absent > 0);
@@ -77,7 +83,7 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
     ctx!.font = '700 14px Arial';
     ctx!.fillText('Rickshaw', 20, y + 26);
     ctx!.textAlign = 'right';
-    ctx!.fillText('Baqaya Din', width - 20, y + 26);
+    ctx!.fillText(colHeader, width - 20, y + 26);
     ctx!.textAlign = 'left';
     y += tableHeaderHeight;
 
@@ -98,11 +104,12 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
         ctx!.font = '700 15px Arial';
         ctx!.fillText(s.numberId, 20, y + 25);
 
-        const hasCredit = (s.credit || 0) > 0;
-        ctx!.fillStyle = hasCredit ? '#1d5fd6' : textColor;
+        const credit = s.credit || 0;
+        ctx!.fillStyle = credit > 0 ? '#1d5fd6' : credit < 0 ? '#c0392b' : textColor;
         ctx!.font = '700 15px Arial';
         ctx!.textAlign = 'right';
-        ctx!.fillText(hasCredit ? '+Rs' + s.credit : String(s.absent), width - 20, y + 25);
+        const label = credit !== 0 ? (credit > 0 ? '+Rs' + credit : '-Rs' + Math.abs(credit)) : String(s.absent);
+        ctx!.fillText(label, width - 20, y + 25);
         ctx!.textAlign = 'left';
 
         ctx!.strokeStyle = '#eeeeee';
@@ -122,7 +129,7 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
     ctx!.font = '700 14px Arial';
     ctx!.fillText('Total: ' + rows.length + ' rickshaw', 20, y + 27);
     ctx!.textAlign = 'right';
-    ctx!.fillText(total + ' din', width - 20, y + 27);
+    ctx!.fillText(total + ' ' + totalUnitWord, width - 20, y + 27);
     ctx!.textAlign = 'left';
     y += footerHeight;
 
@@ -130,9 +137,11 @@ export function exportBaqayaPng(allRickshaws: Rickshaw[], activeTab: 'all' | 'ri
   }
 
   let y = topMargin + dateHeaderHeight;
-  y = drawSection(y, '0 Din Waale Rickshaw', zeroRows, '#1e7e34', '#eaf7ee', '#2e7d32');
+  const zeroTitle = activeTab === 'all' ? '0 Baqaya Waale' : `0 ${unitLabelPlural(activeTab as RickshawType)} Waale`;
+  const dueTitle = activeTab === 'all' ? 'Baqaya Waale' : `Baqaya ${unitLabelPlural(activeTab as RickshawType)} Waale`;
+  y = drawSection(y, zeroTitle, zeroRows, '#1e7e34', '#eaf7ee', '#2e7d32');
   y += sectionGap;
-  drawSection(y, 'Baqaya Din Waale Rickshaw', dueRows, '#c0392b', '#fdecea', '#c0392b');
+  drawSection(y, dueTitle, dueRows, '#c0392b', '#fdecea', '#c0392b');
 
   canvas.toBlob((blob) => {
     if (!blob) return;

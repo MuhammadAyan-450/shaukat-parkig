@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Rickshaw } from '@/lib/types';
-import { rateFor } from '@/lib/utils';
+import { rateFor, unitLabelPlural } from '@/lib/utils';
 
 export default function StepperModal({
   rickshaw,
@@ -31,7 +31,7 @@ export default function StepperModal({
   return (
     <div className="overlay show" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="stepper-card">
-        <div className="stepper-title">Baqaya Din</div>
+        <div className="stepper-title">Baqaya {unitLabelPlural(rickshaw.type)}</div>
         <div className="stepper-id">{rickshaw.numberId}</div>
         <div className="stepper-controls">
           <input

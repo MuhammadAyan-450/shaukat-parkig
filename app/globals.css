@@ -109,6 +109,17 @@ input { font-family: inherit; }
 .staff-id { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
 .staff-hrs { font-size: 13px; color: #999; margin-top: 2px; }
 
+.rate-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.rate-step {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid #ccc; background: #fff; color: #555;
+  font-size: 15px; font-weight: 800; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.rate-step:disabled { opacity: 0.4; }
+.rate-value { font-size: 12.5px; font-weight: 700; color: #777; white-space: nowrap; }
+
 .staff-actions { display: flex; align-items: center; gap: 8px; }
 
 .aaya-btn {
@@ -192,6 +203,22 @@ input { font-family: inherit; }
   border: 1.5px solid #e53935; color: #e53935; background: #fff; border-radius: 8px;
   padding: 5px 9px; font-size: 12px; font-weight: 700; white-space: nowrap;
 }
+
+.collection-row {
+  padding: 10px 4px; border-bottom: 1px solid #f0f0f0;
+}
+.collection-num { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.collection-stats {
+  display: flex; gap: 10px; margin-bottom: 8px;
+}
+.collection-stat {
+  flex: 1; display: flex; flex-direction: column; gap: 2px;
+  background: #fafafa; border-radius: 8px; padding: 6px 8px;
+}
+.collection-stat-label { font-size: 10.5px; color: #999; font-weight: 700; text-transform: uppercase; }
+.collection-stat-value { font-size: 13px; font-weight: 800; color: #333; }
+.collection-stat-value.paisa { color: #2e7d32; }
+.collection-stat-value.baqaya { color: #e0521f; }
 .restore-btn {
   border: 1.5px solid #f0632c; color: #e0521f; background: #fff; border-radius: 999px;
   padding: 6px 14px; font-size: 13px; font-weight: 700; white-space: nowrap;
@@ -211,6 +238,142 @@ input { font-family: inherit; }
 }
 
 .empty { text-align: center; color: #aaa; padding: 60px 20px; font-size: 14px; }
+
+
+/* Notebook full-screen page */
+.notebook-screen {
+  position: fixed; inset: 0; z-index: 40;
+  background: #fdfaf2; overflow-y: auto;
+  max-width: 480px; margin: 0 auto;
+  display: flex; flex-direction: column;
+}
+.notebook-header-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 16px; background: #fff; border-bottom: 1px solid #eee;
+  position: sticky; top: 0; z-index: 1;
+}
+.notebook-title-lg { font-size: 19px; font-weight: 800; color: #1a1a1a; }
+.notebook-back {
+  border: none; background: none; color: #e0521f; font-size: 15px; font-weight: 700;
+  padding: 6px 4px;
+}
+.notebook-body { padding: 16px; flex: 1; }
+
+.note-grid { display: flex; flex-direction: column; gap: 10px; }
+.note-card {
+  position: relative;
+  background: #fffdf5;
+  border: 1px solid #f0e6c8;
+  border-left: 5px solid #f0632c;
+  border-radius: 10px;
+  padding: 14px 40px 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.note-card-title { font-size: 15px; font-weight: 800; color: #333; margin-bottom: 4px; }
+.note-card-preview {
+  font-size: 13px; color: #999; white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; margin-bottom: 8px; line-height: 1.4;
+}
+.note-card-date { font-size: 11.5px; color: #c9a95a; font-weight: 700; }
+.note-delete {
+  position: absolute; top: 10px; right: 10px;
+  border: none; background: #fdecea; color: #e53935;
+  width: 26px; height: 26px; border-radius: 8px; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Lined paper editor */
+.notebook-editor-wrap { flex: 1; display: flex; background: #fff; }
+.lined-textarea {
+  flex: 1; width: 100%; border: none; outline: none; resize: none;
+  font-family: inherit; font-size: 16.5px; color: #2a2a4a;
+  line-height: 32px;
+  padding: 14px 18px 14px 46px;
+  box-sizing: border-box;
+  background-color: #fffefb;
+  background-image:
+    linear-gradient(to bottom, transparent 31px, #dde6f7 31px, #dde6f7 32px, transparent 32px),
+    linear-gradient(to right, transparent 30px, #f3bcbc 30px, #f3bcbc 31px, transparent 31px);
+  background-size: 100% 32px, 100% 100%;
+  background-attachment: local, local;
+}
+.lined-textarea::placeholder { color: #bbb; }
+
+/* Monthly report */
+.report-card { width: 340px; }
+.report-year-row {
+  display: flex; align-items: center; justify-content: center; gap: 18px;
+  margin-bottom: 4px;
+}
+.report-year-btn {
+  border: 1.5px solid #ddd; background: #fff; color: #666; border-radius: 8px;
+  width: 30px; height: 30px; font-size: 14px; display: flex; align-items: center; justify-content: center;
+}
+.report-year-label { font-size: 18px; font-weight: 800; color: #333; }
+.report-year-total { font-size: 12.5px; color: #999; margin-bottom: 12px; }
+.report-month-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px;
+}
+.report-month-btn {
+  border: 1.5px solid #e0e0e0; background: #fafafa; border-radius: 10px;
+  padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.report-month-btn.active {
+  background: #fff3ec; border-color: #f0632c;
+}
+.report-month-name { font-size: 12.5px; font-weight: 700; color: #666; }
+.report-month-btn.active .report-month-name { color: #e0521f; }
+.report-month-amt { font-size: 10px; color: #999; font-weight: 600; }
+.report-selected-title { font-size: 14px; font-weight: 700; color: #666; text-align: left; margin-top: 4px; }
+.report-selected-total { font-size: 24px; font-weight: 800; color: #2e7d32; text-align: left; margin-bottom: 10px; }
+
+/* Bike full-screen page */
+.bike-screen {
+  position: fixed; inset: 0; z-index: 40;
+  background: #f2f2f2; overflow-y: auto;
+  max-width: 480px; margin: 0 auto;
+}
+.bike-header {
+  background: linear-gradient(135deg, #f0632c, #d8481f);
+  padding: 22px 20px 20px;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  color: #fff;
+}
+.bike-header-title { font-size: 24px; font-weight: 800; }
+.bike-header-sub { font-size: 14px; opacity: 0.9; margin-top: 4px; }
+.bike-close-x {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.22); border: none; color: #fff;
+  font-size: 16px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.bike-body { padding: 16px; }
+.bike-report-btn {
+  width: 100%; background: #fff; border: 1.5px solid #f0632c; color: #e0521f;
+  border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.bike-add-card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 8px; }
+.bike-add-title { font-size: 16px; font-weight: 800; color: #333; margin-bottom: 12px; }
+.bike-add-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;
+}
+.bike-input {
+  border: 1.5px solid #ddd; border-radius: 10px; padding: 12px 10px;
+  font-size: 14px; text-align: center; outline: none; box-sizing: border-box;
+  font-family: inherit; width: 100%;
+}
+.bike-input:focus { border-color: #f0632c; }
+.bike-error { color: #e53935; font-size: 13px; font-weight: 600; margin-bottom: 10px; text-align: center; }
+.bike-add-btn {
+  width: 100%; background: #2e7d32; color: #fff; border: none;
+  border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 800;
+}
+@media (max-width: 420px) {
+  .bike-add-grid { grid-template-columns: 1fr; }
+}
 
 
 .absent-badge.credit {

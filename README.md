@@ -5,10 +5,12 @@ mein save hota hai. Matlab jis mobile/computer se bhi app kholein, sab jagah
 **live** ek hi data dikhega — koi bhi device change kare, doosre sab devices
 mein **turant** (real-time) update ho jayega.
 
-Har cheez wahi hai jo purani app mein thi: Rickshaw/Redi tabs, alag rate
-(Rickshaw Rs 70/din, Redi Rs 60/din), Aa Gaya confirm popup, Paid button
-(Rs amount se din kam), baqaya stepper, payment history, Aaj Ka Collection +
-Undo, Wapas Lao confirm, PNG export (0 din / baqaya din), backup/restore.
+Har cheez wahi hai jo purani app mein thi: Rickshaw/Redi/Bike/Chinchi tabs,
+har gari ka apna alag rate (✎ ke pass +/- se kabhi bhi badal sakte hain —
+kisi se Rs 60 milta hai kisi se Rs 80), Bike ka hisab **monthly** hai (baaki
+sab daily), Aa Gaya confirm popup, Paid button (Rs amount se din/mahine kam),
+baqaya stepper, payment history, Aaj Ka Collection + Undo, Wapas Lao confirm,
+PNG export (0 baqaya / baqaya waale), backup/restore.
 
 ---
 
@@ -87,11 +89,42 @@ lekin agar zyada mehfooz chahte hain to:
 
 ## Firestore data structure
 
-- `rickshaws/{id}` — har rickshaw/redi ka record: `numberId`, `type`
-  (`rickshaw`/`redi`), `absent` (baqaya din), `status` (`A`/`P`), `history`.
+- `rickshaws/{id}` — har rickshaw/redi/bike/chinchi ka record: `numberId`, `type`
+  (`rickshaw`/`redi`/`bike`/`chinchi`), `absent` (baqaya din, bike ke liye
+  mahine), `rate` (is khaas gari ka Rs rate — har gari alag ho sakta hai),
+  `cycleDay` (sirf bike ke liye — is mahine ke 30-din cycle mein kitne din
+  guzray), `status` (`A`/`P`), `history`.
 - `payments/{id}` — har payment: `rickshawId`, `days`, `amount`, `date`, `time`.
 - `meta/rollover` — sirf ek doc jo track karta hai raat 2 baje wala rollover
   kab last chala tha (taake do devices ek sath double na kar dein).
+
+## Rate aur Monthly/Daily system (naya)
+
+- Rickshaw/Redi/Chinchi ka hisab **daily** hai, Bike ka **monthly**
+  (har 30 din poore hone par 1 "mahina" baqaya count hota hai).
+- Har gari ka apna `rate` field hota hai — list mein har row ke neeche
+  chhota **− Rs X +** button hai jahan se kabhi bhi 10-10 (bike ke liye
+  100-100) karke rate adjust kar sakte hain, kyunke har kisi ka rate same
+  nahi hota.
+- "Add Karein" modal mein bhi type select karte hi default rate dikhta hai
+  jo add karne se pehle hi adjust ho sakta hai.
+- Default starting rates: Rickshaw Rs 70/din, Redi Rs 60/din, Chinchi
+  Rs 70/din, Bike Rs 2000/mahina — `lib/utils.ts` mein `RATE_RICKSHAW`,
+  `RATE_REDI`, `RATE_CHINCHI`, `RATE_BIKE` se badal sakte hain.
+
+## Deployment protection (agar site "passcode" manga raha ho)
+
+Agar website mobile ya laptop par kholte waqt koi passcode/password manga
+jata hai, to yeh is app ke code ki wajah se nahi hai (code mein koi login
+system hi nahi hai) — yeh aksar **Vercel ki "Deployment Protection"**
+setting ki wajah se hota hai. Isay hatane ke liye:
+
+1. [vercel.com](https://vercel.com) par apne project mein jayein.
+2. **Settings → Deployment Protection** par jayein.
+3. Isay **"Disabled"** (ya "Only Preview Deployments") kar dein aur Save karein.
+
+Agar aap Firebase Hosting ya kisi aur platform se deploy kar rahe hain to
+uska naam bata dein, exact steps waise bata denge.
 
 ## Local development commands
 

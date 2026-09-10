@@ -1,6 +1,6 @@
 'use client';
 
-export type TabValue = 'all' | 'rickshaw' | 'redi';
+export type TabValue = 'all' | 'rickshaw' | 'redi' | 'bike' | 'chinchi';
 
 export default function TypeTabs({
   active,
@@ -13,6 +13,7 @@ export default function TypeTabs({
     { value: 'all', label: 'All' },
     { value: 'rickshaw', label: '🛺 Rickshaw' },
     { value: 'redi', label: '🛒 Redi' },
+    { value: 'chinchi', label: '🍡 Chinchi' },
   ];
 
   return (

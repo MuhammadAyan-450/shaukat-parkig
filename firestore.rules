@@ -11,5 +11,8 @@ service cloud.firestore {
     match /meta/{docId} {
       allow read, write: if true;
     }
+    match /notes/{docId} {
+      allow read, write: if true;
+    }
   }
 }

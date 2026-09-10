@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Rickshaw } from '@/lib/types';
-import { rateFor } from '@/lib/utils';
+import { rateFor, unitLabelPlural } from '@/lib/utils';
 
 export default function PaidModal({
   rickshaw,
@@ -22,10 +22,12 @@ export default function PaidModal({
     setVal(owedRs || rate);
   }, [rickshaw.id, owedRs, rate]);
 
-  // Baqaya se zyada diya gaya hissa ab clamp nahi hota — woh advance (jama) ban jayega.
   const safeVal = Math.max(val, 0);
-  const days = Math.min(rickshaw.absent, Math.floor(safeVal / rate));
-  const extraRs = safeVal - owedRs > 0 ? safeVal - owedRs : 0;
+  const daysRounded = Math.round(safeVal / rate);
+  const daysApplied = Math.min(daysRounded, rickshaw.absent);
+  const extraDays = daysRounded - daysApplied;
+  const diff = safeVal - daysRounded * rate; // +/- farq
+  const creditDelta = extraDays * rate + diff;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     let n = parseInt(e.target.value, 10);
@@ -50,12 +52,13 @@ export default function PaidModal({
         <div className="stepper-title">Kitna Paisa Mila? (Rs)</div>
         <div className="stepper-id">{rickshaw.numberId}</div>
         <div className="stepper-note">
-          Kul Baqaya: {rickshaw.absent} din (Rs {owedRs})
-          {(rickshaw.credit || 0) > 0 && (
+          Kul Baqaya: {rickshaw.absent} {unitLabelPlural(rickshaw.type)} (Rs {owedRs})
+          {(rickshaw.credit || 0) !== 0 && (
             <>
               <br />
-              <span style={{ color: '#1d5fd6', fontWeight: 700 }}>
-                Pehle Se Advance: Rs {rickshaw.credit}
+              <span style={{ color: rickshaw.credit > 0 ? '#1d5fd6' : '#c0392b', fontWeight: 700 }}>
+                Pehle Se {rickshaw.credit > 0 ? 'Advance' : 'Udhaar'}: {rickshaw.credit > 0 ? '+' : '-'}Rs{' '}
+                {Math.abs(rickshaw.credit)}
               </span>
             </>
           )}
@@ -74,11 +77,13 @@ export default function PaidModal({
           />
         </div>
         <div className="stepper-sub" style={{ marginBottom: 18 }}>
-          {days} din kam honge (Rs {days * rate})
-          {extraRs > 0 && (
+          {daysApplied} {unitLabelPlural(rickshaw.type)} kam honge (Rs {daysApplied * rate})
+          {creditDelta !== 0 && (
             <>
               <br />
-              <span style={{ color: '#1d5fd6' }}>+ Rs {extraRs} Advance Jama Hoga</span>
+              <span style={{ color: creditDelta > 0 ? '#1d5fd6' : '#c0392b' }}>
+                {creditDelta > 0 ? '+' : '-'}Rs {Math.abs(creditDelta)} {creditDelta > 0 ? 'Advance' : 'Udhaar'}
+              </span>
             </>
           )}
         </div>

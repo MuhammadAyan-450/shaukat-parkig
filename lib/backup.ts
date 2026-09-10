@@ -1,22 +1,26 @@
 import { collection, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { Rickshaw, Payment } from './types';
+import { rateFor } from './utils';
 
 export function downloadBackup(rickshaws: Rickshaw[], payments: Payment[]) {
   const payload = {
     staff: rickshaws.map((r) => ({
       id: r.numberId,
       type: r.type,
+      label: r.label || '',
       absent: r.absent,
       credit: r.credit || 0,
       status: r.status,
       history: r.history,
+      rate: rateFor(r),
+      cycleDay: r.cycleDay || 0,
     })),
     collections: payments.map((p) => ({
       rickshawId: p.rickshawId,
       days: p.days,
       amount: p.amount,
-      creditAdded: p.creditAdded || 0,
+      creditDelta: p.creditDelta || 0,
       date: p.date,
       time: p.time,
     })),
@@ -56,13 +60,17 @@ export async function restoreBackup(file: File): Promise<void> {
     const batch = writeBatch(db);
     newRickshaws.slice(i, i + 400).forEach((s) => {
       const ref = doc(collection(db, 'rickshaws'));
+      const type = ['redi', 'bike', 'chinchi'].includes(s.type) ? s.type : 'rickshaw';
       batch.set(ref, {
         numberId: s.id,
-        type: s.type === 'redi' ? 'redi' : 'rickshaw',
+        type,
+        ...(s.label ? { label: String(s.label) } : {}),
         absent: s.absent || 0,
         credit: s.credit || 0,
         status: s.status === 'P' ? 'P' : 'A',
         history: Array.isArray(s.history) ? s.history : [],
+        rate: typeof s.rate === 'number' && s.rate > 0 ? s.rate : rateFor({ type }),
+        ...(type === 'bike' ? { cycleDay: s.cycleDay || 0 } : {}),
       });
     });
     await batch.commit();
@@ -77,7 +85,7 @@ export async function restoreBackup(file: File): Promise<void> {
         rickshawId: c.rickshawId,
         days: c.days || 0,
         amount: c.amount || 0,
-        creditAdded: c.creditAdded || 0,
+        creditDelta: c.creditDelta || 0,
         date: c.date,
         time: c.time || new Date().toISOString(),
       });

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Rickshaw } from '@/lib/types';
+import { unitLabelPlural } from '@/lib/utils';
 
 export default function DoneListModal({
   rickshaws,
@@ -13,6 +14,11 @@ export default function DoneListModal({
   onRestore: (rickshaw: Rickshaw) => void;
 }) {
   const [confirmTarget, setConfirmTarget] = useState<Rickshaw | null>(null);
+  const [search, setSearch] = useState('');
+
+  const filtered = rickshaws.filter(
+    (s) => !search.trim() || s.numberId.toLowerCase().includes(search.trim().toLowerCase())
+  );
 
   if (confirmTarget) {
     return (
@@ -48,11 +54,18 @@ export default function DoneListModal({
         <div className="stepper-title" style={{ marginBottom: 12 }}>
           Aaj Aa Chuke Hain
         </div>
+        <input
+          type="text"
+          className="modal-search"
+          placeholder="Rickshaw number search karein..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <div style={{ textAlign: 'left' }}>
-          {rickshaws.length === 0 ? (
-            <div className="list-empty">Abhi koi nahi aaya.</div>
+          {filtered.length === 0 ? (
+            <div className="list-empty">{search ? 'Koi nahi mila.' : 'Abhi koi nahi aaya.'}</div>
           ) : (
-            rickshaws.map((s) => (
+            filtered.map((s) => (
               <div className="list-row" key={s.id}>
                 <span style={{ fontWeight: 700, fontSize: 16 }}>{s.numberId}</span>
                 <span
@@ -63,7 +76,7 @@ export default function DoneListModal({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {s.absent} din baqaya
+                  {s.absent} {unitLabelPlural(s.type)} baqaya
                 </span>
                 <button className="restore-btn" onClick={() => setConfirmTarget(s)}>
                   Wapas Lao

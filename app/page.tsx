@@ -15,12 +15,15 @@ import {
   setAbsentManual,
   markPaid,
   undoPayment,
+  setRate,
 } from '@/lib/actions';
 import { downloadBackup, restoreBackup } from '@/lib/backup';
 import { exportBaqayaPng } from '@/lib/pngExport';
 
 import TypeTabs, { TabValue } from '@/components/TypeTabs';
 import StaffRow from '@/components/StaffRow';
+import BikeScreen from '@/components/BikeScreen';
+import NotebookScreen from '@/components/NotebookScreen';
 import StepperModal from '@/components/modals/StepperModal';
 import PaidModal from '@/components/modals/PaidModal';
 import AayaModal from '@/components/modals/AayaModal';
@@ -30,6 +33,7 @@ import AddModal from '@/components/modals/AddModal';
 import HistoryModal from '@/components/modals/HistoryModal';
 import DoneListModal from '@/components/modals/DoneListModal';
 import CollectionModal from '@/components/modals/CollectionModal';
+import MonthlyReportModal from '@/components/modals/MonthlyReportModal';
 
 export default function HomePage() {
   const { rickshaws, loading } = useRickshaws();
@@ -48,6 +52,9 @@ export default function HomePage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showDoneList, setShowDoneList] = useState(false);
   const [showCollection, setShowCollection] = useState(false);
+  const [showBikes, setShowBikes] = useState(false);
+  const [showNotebook, setShowNotebook] = useState(false);
+  const [showMonthlyReport, setShowMonthlyReport] = useState<false | 'all' | 'bike'>(false);
 
   const restoreFileRef = useRef<HTMLInputElement>(null);
   const didRollover = useRef(false);
@@ -82,9 +89,13 @@ export default function HomePage() {
   );
 
   const tabFiltered = useMemo(
-    () => (activeTab === 'all' ? rickshaws : rickshaws.filter((r) => r.type === activeTab)),
+    () =>
+      (activeTab === 'all' ? rickshaws : rickshaws.filter((r) => r.type === activeTab)).filter(
+        (r) => r.type !== 'bike'
+      ),
     [rickshaws, activeTab]
   );
+  const bikes = useMemo(() => rickshaws.filter((r) => r.type === 'bike'), [rickshaws]);
   const pendingList = useMemo(
     () =>
       tabFiltered
@@ -102,11 +113,25 @@ export default function HomePage() {
     return rickshaws.find((x) => x.id === r.id) || r;
   }
 
+  const TAB_LABELS: Record<string, string> = {
+    rickshaw: 'Rickshaw',
+    redi: 'Redi',
+    bike: 'Bike',
+    chinchi: 'Chinchi',
+  };
   const placeholder =
-    activeTab === 'redi' ? `${pendingList.length} Redi` : activeTab === 'rickshaw' ? `${pendingList.length} Rickshaw` : `${pendingList.length} Rickshaw/Redi`;
+    activeTab === 'all' ? `${pendingList.length} Total` : `${pendingList.length} ${TAB_LABELS[activeTab]}`;
 
-  async function handleAdd(numberId: string, type: RickshawType) {
-    await addRickshaw(numberId, type);
+  async function handleAdd(numberId: string, type: RickshawType, rate?: number) {
+    await addRickshaw(numberId, type, rate);
+  }
+
+  async function handleAddBike(numberId: string, label: string, rate: number) {
+    await addRickshaw(numberId, 'bike', rate, label);
+  }
+
+  async function handleRateChange(rickshaw: Rickshaw, newRate: number) {
+    await setRate(rickshaw, newRate);
   }
 
   async function handleUndo(payment: Payment) {
@@ -162,6 +187,15 @@ export default function HomePage() {
         </button>
         <button className="pill-btn green" onClick={() => setShowCollection(true)}>
           💰 Aaj: Rs {todayTotal}
+        </button>
+        <button className="pill-btn" onClick={() => setShowBikes(true)}>
+          🏍️ Bikes ({bikes.length})
+        </button>
+        <button className="pill-btn" onClick={() => setShowNotebook(true)}>
+          📓 Notebook
+        </button>
+        <button className="pill-btn" onClick={() => setShowMonthlyReport('all')}>
+          📊 Mahana Report
         </button>
         <button className="pill-btn" onClick={() => exportBaqayaPng(rickshaws, activeTab)}>
           🖼 PNG Banayen
@@ -253,6 +287,7 @@ export default function HomePage() {
           rickshaw={live(editTarget)}
           onClose={() => setEditTarget(null)}
           onSave={(newId) => renameRickshaw(editTarget.id, newId)}
+          onRateChange={(newRate) => handleRateChange(live(editTarget), newRate)}
         />
       )}
 
@@ -282,8 +317,35 @@ export default function HomePage() {
       {showCollection && (
         <CollectionModal
           payments={todaysPayments}
+          rickshaws={rickshaws}
           onClose={() => setShowCollection(false)}
           onUndo={handleUndo}
+        />
+      )}
+
+      {showNotebook && <NotebookScreen onClose={() => setShowNotebook(false)} />}
+
+      {showMonthlyReport !== false && (
+        <MonthlyReportModal
+          payments={payments}
+          rickshaws={rickshaws}
+          filterType={showMonthlyReport === 'bike' ? 'bike' : undefined}
+          onClose={() => setShowMonthlyReport(false)}
+        />
+      )}
+
+      {showBikes && (
+        <BikeScreen
+          bikes={bikes}
+          onClose={() => setShowBikes(false)}
+          onAdd={handleAddBike}
+          onReport={() => setShowMonthlyReport('bike')}
+          onOpenStepper={(r) => setStepperTarget(r)}
+          onAaya={(r) => setAayaTarget(r)}
+          onDelete={(r) => setDeleteTarget(r)}
+          onEdit={(r) => setEditTarget(r)}
+          onHistory={(r) => setHistoryTarget(r)}
+          onPaid={(r) => setPaidTarget(r)}
         />
       )}
     </div>
